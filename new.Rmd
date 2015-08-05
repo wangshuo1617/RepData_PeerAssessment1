@@ -1,0 +1,29 @@
+```{r}
+dt <- read.table(file = "activity.csv",header = TRUE,colClasses = c("numeric","Date","numeric"),sep = ",")
+library(reshape2)
+dtmelt <- melt(data = dt,id.vars = 2:3,measure.vars = 1)
+daily_step<- dcast(dtmelt, date~variable, sum,na.rm=TRUE)
+ggplot(daily_step,aes(steps))+geom_histogram(color="white")+labs(title="Each Day Steps")
+mean_step <- mean(daily_step$steps,na.rm=TRUE)
+median_step <- median(daily_step$steps,na.rm=TRUE)
+interval_step <- tapply(dt$steps,dt$interval,FUN = mean,na.rm=TRUE)
+qplot(unique(dt$interval),interval_step,geom = "line")+labs(x="Interval",y="Steps")
+unique(dt$interval)[which.max(interval_step)]
+sum(is.na(dt$steps))
+dt_filled <- cbind(dt,fill=rep(interval_step,61))
+dt_filled$steps[is.na(dt_filled$steps)] <- dt_filled$fill[is.na(dt_filled$steps)]
+dt_filled <- dt_filled[,1:3]
+dtfillmelt <- melt(data = dt_filled,id.vars = 2:3,measure.vars = 1)
+daily_fill_step<- dcast(dtfillmelt, date~variable, sum,na.rm=TRUE)
+ggplot(daily_fill_step,aes(steps))+geom_histogram(color="white")+labs(title="Each Day Steps(filled dataset)")
+mean_fill_step <- mean(daily_fill_step$steps,na.rm=TRUE)
+median_fill_step <- median(daily_fill_step$steps,na.rm=TRUE)
+week <- weekdays(dt_filled$date) %in% c("ÐÇÆÚÁù","ÐÇÆÚÈÕ")
+week <- factor(week)
+levels(week) <- c("weekday","weekend")
+dt_filled <- cbind(dt_filled,week)
+week_step <- tapply(dt_filled$steps,list(dt_filled$interval,dt_filled$week),mean,na.rm=TRUE)
+week_step <- melt(data = week_step,varnames = c("interval","week"),value.name = "step")
+ggplot(week_step,aes(interval,step))+geom_line()+facet_wrap(facets = ~week,nrow=2)+labs(x="Number of Steps",y="Interval")
+      
+```
